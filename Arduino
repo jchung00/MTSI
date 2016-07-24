@@ -1,0 +1,100 @@
+int rPin = 4; 
+int bPin = 5;
+int gPin = 6;
+int sSensor1 = A0; 
+int sSensor2 = A1; 
+int bSensor1 = A2;
+int bSensor2 = A3;
+int bSensor3 = A4;
+int bSensor4 = A5;
+const int SWITCH = 9; 
+//const int BUTTON = 9; 
+int val = 0;
+int ss1Val=0;
+int ss2Val=0;
+int bs1Val=0;
+int bs2Val=0;
+int bs3Val=0;
+int bs4Val=0;
+int state = 0; 
+int goodPositions[2][8]; //add as many good positions we determine
+int currPosition[8] = {ss1Val, ss2Val, bs1Val, bs2Val, bs3Val, bs4Val, 0, 0}; //need to add load sensors here
+
+
+for (int a = 0; a < goodPositions[0].length; a++){
+  goodPositions[0][a]=0;
+}
+
+for (int b = 0; b < goodPositions[0].length; b++){
+  goodPositions[1][b]=200;
+}
+
+boolean isGood(){
+  for(int x[8] : goodPositions){
+    for(int i=0; i<x.legnth; i++){
+      if(x[i]>currPosition[i]){
+        return false; 
+      }
+    }
+  }
+  return true; 
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(rPin, OUTPUT);
+  pinMode(bPin, OUTPUT);
+  pinMode(gPin, OUTPUT);
+  /*pinMode(bSensor3, INPUT);
+  pinMode(bSensor4, INPUT);*/
+  pinMode(SWITCH, INPUT);
+ // pinMode(BUTTON, INPUT);
+  Serial.begin(9600);
+}
+
+void setColor(int red, int blue, int green){
+  analogWrite(rPin, red);
+  analogWrite(bPin, blue);
+  analogWrite(gPin, green);
+}
+
+/*void updateButton(){
+  val= digitalRead(BUTTON);
+  if(val==HIGH){
+    state++;
+    delay(500);
+  }
+  if(state>1){
+    state=0;
+  }
+}*/
+
+void loop() {
+  val = digitalRead(SWITCH);
+  //updateButton();
+  //Serial.println(val);
+  setColor(255, 0, 0);
+  if(val==HIGH/*state==1*/){
+    //updateButton();
+    setColor(0, 0, 255); 
+    ss1Val= analogRead(sSensor1);
+    ss2Val= analogRead(sSensor2);
+    bs1Val= analogRead(bSensor1);
+    bs2Val= analogRead(bSensor2);
+    bs3Val= (analogRead(bSensor3)-562)*2;
+    bs4Val= (analogRead(bSensor4)-562)*2;
+    Serial.print("Sensor 1= ");
+    Serial.println(ss1Val);
+    Serial.print("Sensor 2= "); 
+    Serial.println(ss2Val); 
+    Serial.print("Sensor 3= ");
+    Serial.println(bs1Val);
+    Serial.print("Sensor 4= "); 
+    Serial.println(bs2Val); 
+    Serial.print("Sensor 5= ");
+    Serial.println(bs3Val);
+    Serial.print("Sensor 6= "); 
+    Serial.println(bs4Val); 
+    delay(500); 
+  }
+}
