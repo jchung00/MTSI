@@ -1,0 +1,194 @@
+int rPin = 4; 
+int bPin = 2;
+int gPin = 6; //pin numbers for each LED
+int lSensor1 = 3;
+int lSensor2 = 5;
+int sSensor1 = A0; 
+int sSensor2 = A1; 
+int bSensor1 = A2;
+int bSensor2 = A3;
+int bSensor3 = A4;
+int bSensor4 = A5; //pin numbers for each pressure sensor
+int SWITCH = 7; //pin number for switch
+int vib1 = 8;
+int vib2 = 9;
+int vib3 = 10;
+int vib4 = 11;
+int vib5 = 12;
+int vib6 = 13; //pin number for vibrting disks
+//const int BUTTON = 9; 
+int val = 0; //reads SWITCH's value
+int ss1Val=0; 
+int ss2Val=0;
+int bs1Val=0;
+int bs2Val=0;
+int bs3Val=0;
+int bs4Val=0;
+int ls1Val = 0;
+int ls2Val = 0; //reads corresponding sensor value
+//int state = 0; 
+int goodPositions[3][6]; //2D array of all good positions. 
+                         //Each row is different position with corresponding sensor readings. 
+                         //Add as many good positions we determine
+int currPosition[6]; //array of current sensor readings; need to add load sensors here
+int row = 3; //#rows
+int col = 6; //#cols in 2D array of good positions
+
+boolean comparePosition(int r){
+  if(r==2){
+    int count = 0; 
+    if(currPosition[0] < goodPositions[r][0] && currPosition[0] < goodPositions[r][1]){
+      count+=2;
+    }
+    for(int c = 2; c < col; c++){
+      if(currPosition[c] < goodPositions[r][c]){
+        count++;
+      }
+    }
+    if(count==col){
+      return true;
+    }
+    else{
+      return false; 
+    }
+  }
+  int count = 0; //check how many of sensor values are not being pressed
+  for(int c=0; c<col; c++){ //going through each sensor value
+    if(currPosition[c]<goodPositions[r][c]){ //case 1: checking if each are pretty much not being pressed
+      count++; 
+    }
+  }
+  if(count==col){
+    return true;  //if all sensor values are pretty much 0, we have a good position
+  }
+  
+  for(int c=0; c<col; c++){
+    if(currPosition[c]<goodPositions[r][c]){ //sensor isn't being pressed, when it should be if it's a good position
+      return false; 
+    }
+  }
+  return true; //if all readings are good, we have a good position
+}
+
+boolean isGood(){
+  for(int i=0; i<row; i++){
+    if(comparePosition(i) == true){ //this makes sure we take each row (position) separately
+      return true; //if current position aligns with any good position, it's good. 
+    }
+  }
+  return false; 
+}
+
+void setColor(int red, int blue, int green){
+  analogWrite(rPin, red);
+  analogWrite(bPin, blue);
+  analogWrite(gPin, green); 
+}
+
+void checkSensorValues(){
+  ss1Val= analogRead(sSensor1);
+  ss2Val= analogRead(sSensor2);
+  bs1Val= analogRead(bSensor1);
+  bs2Val= analogRead(bSensor2);
+  bs3Val= (analogRead(bSensor3)-565)*2; 
+  bs4Val= (analogRead(bSensor4)-565)*2; 
+}
+
+void printSensorValues(){
+    Serial.print("Sensor 1= ");
+    Serial.println(ss1Val);
+    Serial.print("Sensor 2= "); 
+    Serial.println(ss2Val); 
+    Serial.print("Sensor 3= ");
+    Serial.println(bs1Val);
+    Serial.print("Sensor 4= "); 
+    Serial.println(bs2Val); 
+    Serial.print("Sensor 5= ");
+    Serial.println(bs3Val);
+    Serial.print("Sensor 6= "); 
+    Serial.println(bs4Val); 
+}
+
+void vibrate(){
+  digitalWrite(vib1, HIGH);
+  digitalWrite(vib2, HIGH);
+  digitalWrite(vib3, HIGH);
+  digitalWrite(vib4, HIGH);
+  digitalWrite(vib5, HIGH);
+  digitalWrite(vib6, HIGH);
+}
+
+/*void updateButton(){
+  val= digitalRead(BUTTON);
+  if(val==HIGH){
+    state++;
+    delay(500);
+  }
+  if(state>1){
+    state=0;
+  }
+}*/
+void setup() {
+  // put your setup code here, to run once:
+  pinMode(rPin, OUTPUT);
+  pinMode(bPin, OUTPUT);
+  pinMode(gPin, OUTPUT);
+  pinMode(vib1, OUTPUT);
+  pinMode(vib2, OUTPUT);
+  pinMode(vib3, OUTPUT);
+  pinMode(vib4, OUTPUT);
+  pinMode(vib5, OUTPUT);
+  pinMode(vib6, OUTPUT);
+  /*pinMode(bSensor3, INPUT);
+  pinMode(bSensor4, INPUT);*/
+  pinMode(SWITCH, INPUT);
+ // pinMode(BUTTON, INPUT);
+  for (int a = 0; a < col; a++){ 
+    goodPositions[0][a]=20;
+  } //saves first good position
+
+  for (int b = 0; b < col; b++){
+    goodPositions[1][b]=400; //all are pressed
+  }//saves second good position 
+
+  goodPositions[2][0] = 400;
+  goodPositions[2][1] = 400;
+  goodPositions[2][2] = 20;
+  goodPositions[2][3] = 20;
+  goodPositions[2][4] = 20;
+  goodPositions[2][5] = 20; //saves third good position
+  
+  
+  Serial.begin(9600);
+}  
+
+void loop() {
+  val = digitalRead(SWITCH); //update switch value each loop
+  checkSensorValues(); //update sensor readings each loop
+  printSensorValues();
+  /*if(val == HIGH){
+    Serial.println("switch: on");
+  }
+  else{
+    Serial.println("switch: off");
+  }*/
+  currPosition[0] = ss1Val;
+  currPosition[1] = ss2Val;
+  currPosition[2] = bs1Val;
+  currPosition[3] = bs2Val;
+  currPosition[4] = bs3Val;
+  currPosition[5] = bs4Val; //updates the currPosition array each loop
+  if(val==HIGH){ //if the switch is on...
+      if(isGood()){ //check if the current position is good
+        setColor(0, 0, 255); //if yes, green light
+      }
+      else{
+          setColor(255, 0, 0); //if not, red light
+          vibrate();
+      }
+  }
+  else{
+    setColor(0, 0, 0); //if the switch isn't on, no light
+  }
+  delay(500); //this is just to make sensor readings on serial monitor not so fast
+}
